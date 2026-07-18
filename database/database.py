@@ -5,7 +5,6 @@ from datetime import datetime
 DB_NAME = "ai_agent.db"
 
 
-
 def get_connection():
 
     return sqlite3.connect(
@@ -107,6 +106,7 @@ def initialize_database():
     """)
 
 
+
     conn.commit()
 
     conn.close()
@@ -128,8 +128,6 @@ def migrate_database():
     cursor = conn.cursor()
 
 
-
-    # USERS MIGRATION
 
     cursor.execute(
         "PRAGMA table_info(users)"
@@ -162,87 +160,6 @@ def migrate_database():
 
 
 
-
-
-    # REPORTS MIGRATION
-
-    cursor.execute(
-        "PRAGMA table_info(reports)"
-    )
-
-    report_columns = [
-        row[1]
-        for row in cursor.fetchall()
-    ]
-
-
-
-    if "username" not in report_columns:
-
-        cursor.execute(
-        """
-        ALTER TABLE reports
-        ADD COLUMN username TEXT
-        """
-        )
-
-
-
-    if "topic" not in report_columns:
-
-        cursor.execute(
-        """
-        ALTER TABLE reports
-        ADD COLUMN topic TEXT
-        """
-        )
-
-
-
-    if "report" not in report_columns:
-
-        cursor.execute(
-        """
-        ALTER TABLE reports
-        ADD COLUMN report TEXT
-        """
-        )
-
-
-
-    if "pdf_file" not in report_columns:
-
-        cursor.execute(
-        """
-        ALTER TABLE reports
-        ADD COLUMN pdf_file TEXT
-        """
-        )
-
-
-
-    if "excel_file" not in report_columns:
-
-        cursor.execute(
-        """
-        ALTER TABLE reports
-        ADD COLUMN excel_file TEXT
-        """
-        )
-
-
-
-    if "created_at" not in report_columns:
-
-        cursor.execute(
-        """
-        ALTER TABLE reports
-        ADD COLUMN created_at TEXT
-        """
-        )
-
-
-
     conn.commit()
 
     conn.close()
@@ -250,44 +167,75 @@ def migrate_database():
 
 
 
+
 # ---------------- USERS ----------------
 
 
-def create_user(username,password,role="user"):
+def create_user(username, password):
 
 
-    conn=get_connection()
+    conn = get_connection()
 
-    cursor=conn.cursor()
+    cursor = conn.cursor()
 
 
     try:
+
+
+        # Count existing users
+
+        cursor.execute(
+            """
+            SELECT COUNT(*)
+            FROM users
+            """
+        )
+
+
+        total_users = cursor.fetchone()[0]
+
+
+
+        # First user = Admin
+
+        if total_users == 0:
+
+            role = "admin"
+
+        else:
+
+            role = "user"
+
+
 
         cursor.execute(
         """
         INSERT INTO users
         (
-        username,
-        password,
-        role,
-        created_at
+            username,
+            password,
+            role,
+            created_at
         )
 
         VALUES(?,?,?,?)
 
         """,
         (
-        username,
-        password,
-        role,
-        datetime.now().isoformat()
+            username,
+            password,
+            role,
+            datetime.now().isoformat()
         )
         )
+
 
 
         conn.commit()
 
+
         return True
+
 
 
     except Exception as e:
@@ -297,9 +245,11 @@ def create_user(username,password,role="user"):
         return False
 
 
+
     finally:
 
         conn.close()
+
 
 
 
@@ -328,7 +278,9 @@ def get_user(username):
 
     user=cursor.fetchone()
 
+
     conn.close()
+
 
     return user
 
@@ -356,7 +308,9 @@ def get_all_users():
 
     result=cursor.fetchall()
 
+
     conn.close()
+
 
     return result
 
@@ -365,7 +319,6 @@ def get_all_users():
 
 
 # ---------------- REPORTS ----------------
-
 
 
 def save_report(
@@ -387,24 +340,24 @@ def save_report(
     INSERT INTO reports
 
     (
-    username,
-    topic,
-    report,
-    pdf_file,
-    excel_file,
-    created_at
+        username,
+        topic,
+        report,
+        pdf_file,
+        excel_file,
+        created_at
     )
 
     VALUES(?,?,?,?,?,?)
 
     """,
     (
-    username,
-    topic,
-    report,
-    pdf_file,
-    excel_file,
-    datetime.now().isoformat()
+        username,
+        topic,
+        report,
+        pdf_file,
+        excel_file,
+        datetime.now().isoformat()
     )
     )
 
@@ -442,9 +395,12 @@ def get_user_reports(username):
 
     result=cursor.fetchall()
 
+
     conn.close()
 
+
     return result
+
 
 
 
@@ -456,6 +412,7 @@ def get_reports(username=None):
     if username:
 
         return get_user_reports(username)
+
 
 
     conn=get_connection()
@@ -477,9 +434,12 @@ def get_reports(username=None):
 
     result=cursor.fetchall()
 
+
     conn.close()
 
+
     return result
+
 
 
 
@@ -507,7 +467,9 @@ def get_all_reports():
 
     result=cursor.fetchall()
 
+
     conn.close()
+
 
     return result
 
@@ -516,7 +478,6 @@ def get_all_reports():
 
 
 # ---------------- USAGE ----------------
-
 
 
 def save_usage(username,action,topic=""):
@@ -532,20 +493,20 @@ def save_usage(username,action,topic=""):
     INSERT INTO usage_tracking
 
     (
-    username,
-    action,
-    topic,
-    created_at
+        username,
+        action,
+        topic,
+        created_at
     )
 
     VALUES(?,?,?,?)
 
     """,
     (
-    username,
-    action,
-    topic,
-    datetime.now().isoformat()
+        username,
+        action,
+        topic,
+        datetime.now().isoformat()
     )
     )
 
@@ -553,6 +514,7 @@ def save_usage(username,action,topic=""):
     conn.commit()
 
     conn.close()
+
 
 
 
@@ -571,6 +533,7 @@ def get_usage_count():
     SELECT COUNT(*)
 
     FROM usage_tracking
+
     """
     )
 
@@ -579,6 +542,7 @@ def get_usage_count():
 
 
     conn.close()
+
 
     return result
 
@@ -599,15 +563,19 @@ def get_total_users():
     SELECT COUNT(*)
 
     FROM users
+
     """
     )
 
 
     result=cursor.fetchone()[0]
 
+
     conn.close()
 
+
     return result
+
 
 
 
@@ -626,13 +594,16 @@ def get_total_reports():
     SELECT COUNT(*)
 
     FROM reports
+
     """
     )
 
 
     result=cursor.fetchone()[0]
 
+
     conn.close()
+
 
     return result
 
@@ -641,7 +612,6 @@ def get_total_reports():
 
 
 # ---------------- MEMORY ----------------
-
 
 
 def save_message(user_id,role,message):
@@ -657,20 +627,20 @@ def save_message(user_id,role,message):
     INSERT INTO conversations
 
     (
-    user_id,
-    role,
-    message,
-    created_at
+        user_id,
+        role,
+        message,
+        created_at
     )
 
     VALUES(?,?,?,?)
 
     """,
     (
-    user_id,
-    role,
-    message,
-    datetime.now().isoformat()
+        user_id,
+        role,
+        message,
+        datetime.now().isoformat()
     )
     )
 
@@ -678,6 +648,7 @@ def save_message(user_id,role,message):
     conn.commit()
 
     conn.close()
+
 
 
 
@@ -708,6 +679,8 @@ def get_history(user_id):
 
     result=cursor.fetchall()
 
+
     conn.close()
+
 
     return result
