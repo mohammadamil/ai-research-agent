@@ -668,3 +668,109 @@ def get_history(user_id):
 
 
     return history
+
+# ---------------- ADMIN FUNCTIONS ----------------
+
+
+def get_total_users():
+
+    conn = get_connection()
+
+    cursor = conn.cursor()
+
+    cursor.execute(
+        "SELECT COUNT(*) FROM users"
+    )
+
+    result = cursor.fetchone()[0]
+
+    conn.close()
+
+    return result
+
+
+
+
+
+def get_total_reports():
+
+    conn = get_connection()
+
+    cursor = conn.cursor()
+
+    cursor.execute(
+        "SELECT COUNT(*) FROM reports"
+    )
+
+    result = cursor.fetchone()[0]
+
+    conn.close()
+
+    return result
+
+
+
+
+
+def get_usage_count():
+
+    conn = get_connection()
+
+    cursor = conn.cursor()
+
+    cursor.execute(
+        "SELECT COUNT(*) FROM usage_tracking"
+    )
+
+    result = cursor.fetchone()[0]
+
+    conn.close()
+
+    return result
+
+
+
+
+
+def get_all_users():
+
+    conn = get_connection()
+
+    cursor = conn.cursor()
+
+    cursor.execute(
+        """
+        SELECT username, role, created_at
+        FROM users
+        """
+    )
+
+    result = cursor.fetchall()
+
+    conn.close()
+
+    return result
+
+
+
+
+
+def get_all_reports():
+
+    conn = get_connection()
+
+    cursor = conn.cursor()
+
+    cursor.execute(
+        """
+        SELECT username, topic, created_at
+        FROM reports
+        ORDER BY id DESC
+        """
+    )
+
+    result = cursor.fetchall()
+
+    conn.close()
+
+    return result
