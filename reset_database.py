@@ -1,38 +1,31 @@
-import streamlit as st
-from database.database import get_connection
+import sqlite3
+import os
 
-st.set_page_config(
-    page_title="Reset Database",
-    page_icon="⚠️"
-)
 
-st.title("⚠️ Database Reset Tool")
+DB_NAME = "ai_agent.db"
 
-st.warning(
-    "This will permanently delete ALL users, reports, conversations, and usage data."
-)
 
-confirm = st.checkbox("I understand that this action cannot be undone.")
+if not os.path.exists(DB_NAME):
 
-if confirm:
-    if st.button("🗑 Delete Everything"):
+    print("Database not found")
 
-        conn = get_connection()
-        cursor = conn.cursor()
+else:
 
-        try:
-            cursor.execute("DELETE FROM users")
-            cursor.execute("DELETE FROM reports")
-            cursor.execute("DELETE FROM conversations")
-            cursor.execute("DELETE FROM usage_tracking")
+    conn = sqlite3.connect(DB_NAME)
 
-            conn.commit()
+    cursor = conn.cursor()
 
-            st.success("✅ Database has been cleared successfully.")
-            st.info("You can now register a new admin account.")
 
-        except Exception as e:
-            st.error(f"Error: {e}")
+    cursor.execute(
+        """
+        DELETE FROM users
+        """
+    )
 
-        finally:
-            conn.close()
+
+    conn.commit()
+
+    conn.close()
+
+
+    print("✅ All users deleted")

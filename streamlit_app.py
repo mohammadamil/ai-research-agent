@@ -43,7 +43,7 @@ st.set_page_config(
 
 initialize_database()
 
-
+from reset_database import *
 
 # ------------------
 # SESSION
