@@ -129,19 +129,19 @@ def migrate_database():
 
 
 
+    # USERS MIGRATION
+
     cursor.execute(
         "PRAGMA table_info(users)"
     )
 
-
-    columns = [
+    user_columns = [
         row[1]
         for row in cursor.fetchall()
     ]
 
 
-
-    if "role" not in columns:
+    if "role" not in user_columns:
 
         cursor.execute(
         """
@@ -151,8 +151,7 @@ def migrate_database():
         )
 
 
-
-    if "created_at" not in columns:
+    if "created_at" not in user_columns:
 
         cursor.execute(
         """
@@ -163,10 +162,90 @@ def migrate_database():
 
 
 
+
+
+    # REPORTS MIGRATION
+
+    cursor.execute(
+        "PRAGMA table_info(reports)"
+    )
+
+    report_columns = [
+        row[1]
+        for row in cursor.fetchall()
+    ]
+
+
+
+    if "username" not in report_columns:
+
+        cursor.execute(
+        """
+        ALTER TABLE reports
+        ADD COLUMN username TEXT
+        """
+        )
+
+
+
+    if "topic" not in report_columns:
+
+        cursor.execute(
+        """
+        ALTER TABLE reports
+        ADD COLUMN topic TEXT
+        """
+        )
+
+
+
+    if "report" not in report_columns:
+
+        cursor.execute(
+        """
+        ALTER TABLE reports
+        ADD COLUMN report TEXT
+        """
+        )
+
+
+
+    if "pdf_file" not in report_columns:
+
+        cursor.execute(
+        """
+        ALTER TABLE reports
+        ADD COLUMN pdf_file TEXT
+        """
+        )
+
+
+
+    if "excel_file" not in report_columns:
+
+        cursor.execute(
+        """
+        ALTER TABLE reports
+        ADD COLUMN excel_file TEXT
+        """
+        )
+
+
+
+    if "created_at" not in report_columns:
+
+        cursor.execute(
+        """
+        ALTER TABLE reports
+        ADD COLUMN created_at TEXT
+        """
+        )
+
+
+
     conn.commit()
 
     conn.close()
-
 
 
 
