@@ -297,12 +297,70 @@ menu = st.sidebar.radio(
 # DASHBOARD
 # ------------------
 
-if menu == "🏠 Dashboard":
+if menu=="🏠 Dashboard":
 
 
     st.title(
         f"Welcome {username} 👋"
     )
+
+
+    st.subheader(
+        "🔎 Start AI Research"
+    )
+
+
+    search_topic = st.text_input(
+        "What do you want to research?",
+        placeholder="Example: Top AI companies in India 2026"
+    )
+
+
+    if st.button(
+        "🚀 Generate Report"
+    ):
+
+
+        if search_topic:
+
+
+            with st.spinner(
+                "🤖 AI Agents researching..."
+            ):
+
+
+                response = run_agent(
+                    search_topic,
+                    username
+                )
+
+
+                track_usage(
+                    username,
+                    "dashboard_search",
+                    search_topic
+                )
+
+
+            st.success(
+                "Report Generated Successfully ✅"
+            )
+
+
+            st.write(response)
+
+
+        else:
+
+
+            st.warning(
+                "Please enter a research topic"
+            )
+
+
+
+    st.divider()
+
 
 
     st.info(
@@ -315,7 +373,6 @@ if menu == "🏠 Dashboard":
         • Create PDF and Excel files
         """
     )
-
 
 
 
