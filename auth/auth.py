@@ -4,15 +4,21 @@ from database.database import (
 )
 
 
-from auth.security import (
-    hash_password,
-    verify_password
-)
+import hashlib
+
+
+
+def hash_password(password):
+
+    return hashlib.sha256(
+        password.encode()
+    ).hexdigest()
 
 
 
 
-def register(username,password):
+
+def register(username, password):
 
 
     hashed = hash_password(password)
@@ -28,24 +34,32 @@ def register(username,password):
 
 
 
-def login(username,password):
+
+def login(username, password):
 
 
-    user=get_user(username)
+    user = get_user(username)
 
 
 
-    if not user:
+    if user is None:
 
         return False
 
 
 
-    stored_password=user[1]
+    stored_password = user[1]
 
 
 
-    return verify_password(
-        password,
-        stored_password
-    )
+    hashed = hash_password(password)
+
+
+
+    if stored_password == hashed:
+
+
+        return user
+
+
+    return False

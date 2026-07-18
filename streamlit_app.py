@@ -73,7 +73,15 @@ st.sidebar.caption(
 
 if "user" not in st.session_state:
 
-    st.session_state.user=None
+    st.session_state.user = None
+
+
+
+if "role" not in st.session_state:
+
+    st.session_state.role = None
+
+
 
 
 
@@ -94,7 +102,8 @@ if st.session_state.user is None:
     )
 
 
-    option=st.selectbox(
+
+    option = st.selectbox(
 
         "Choose",
 
@@ -107,25 +116,25 @@ if st.session_state.user is None:
 
 
 
-    username=st.text_input(
+    username = st.text_input(
         "Username"
     )
 
 
-    password=st.text_input(
+    password = st.text_input(
         "Password",
         type="password"
     )
 
 
 
-    if option=="Register":
+    if option == "Register":
 
 
         if st.button("Create Account"):
 
 
-            result=register(
+            result = register(
                 username,
                 password
             )
@@ -151,7 +160,7 @@ if st.session_state.user is None:
         if st.button("Login"):
 
 
-            result=login(
+            result = login(
                 username,
                 password
             )
@@ -160,13 +169,21 @@ if st.session_state.user is None:
             if result:
 
 
-                st.session_state.user=username
+                # result contains:
+                # username,password,role
+
+                st.session_state.user = result[0]
+
+                st.session_state.role = result[2]
+
 
                 st.success(
                     "Login successful"
                 )
 
+
                 st.rerun()
+
 
 
             else:
@@ -188,7 +205,9 @@ if st.session_state.user is None:
 # ------------------
 
 
-username=st.session_state.user
+username = st.session_state.user
+
+role = st.session_state.role
 
 
 
@@ -197,19 +216,48 @@ st.sidebar.success(
 )
 
 
+st.sidebar.caption(
+    f"Role: {role}"
+)
 
-menu=st.sidebar.radio(
+
+
+
+# ------------------
+# MENU
+# ------------------
+
+
+menu_items = [
+
+    "🏠 Dashboard",
+
+    "💬 AI Research Chat",
+
+    "📂 My Reports"
+
+]
+
+
+
+# Only admin sees this
+
+if role == "admin":
+
+    menu_items.append(
+        "👑 Admin"
+    )
+
+
+
+menu = st.sidebar.radio(
 
     "Menu",
 
-    [
-        "🏠 Dashboard",
-        "💬 AI Research Chat",
-        "📂 My Reports",
-        "👑 Admin"
-    ]
+    menu_items
 
 )
+
 
 
 
@@ -217,7 +265,7 @@ menu=st.sidebar.radio(
 # DASHBOARD
 # ------------------
 
-if menu=="🏠 Dashboard":
+if menu == "🏠 Dashboard":
 
 
     st.title(
@@ -240,12 +288,11 @@ if menu=="🏠 Dashboard":
 
 
 
-
 # ------------------
 # CHAT INTERFACE
 # ------------------
 
-elif menu=="💬 AI Research Chat":
+elif menu == "💬 AI Research Chat":
 
 
     st.title(
@@ -282,16 +329,24 @@ elif menu=="💬 AI Research Chat":
 
 
                 response = run_agent(
+
                     topic,
+
                     username
+
                 )
 
 
                 track_usage(
+
                     username,
+
                     "research_generated",
+
                     topic
+
                 )
+
 
 
             st.success(
@@ -305,11 +360,13 @@ elif menu=="💬 AI Research Chat":
 
 
 
+
+
 # ------------------
 # REPORTS
 # ------------------
 
-elif menu=="📂 My Reports":
+elif menu == "📂 My Reports":
 
 
     st.title(
@@ -318,7 +375,7 @@ elif menu=="📂 My Reports":
 
 
 
-    reports=get_reports(
+    reports = get_reports(
         username
     )
 
@@ -330,11 +387,11 @@ elif menu=="📂 My Reports":
         for report in reports:
 
 
-            topic=report[0]
+            topic = report[0]
 
-            pdf=report[1]
+            pdf = report[1]
 
-            excel=report[2]
+            excel = report[2]
 
 
 
@@ -344,7 +401,7 @@ elif menu=="📂 My Reports":
 
 
 
-            col1,col2=st.columns(2)
+            col1,col2 = st.columns(2)
 
 
 
@@ -366,7 +423,6 @@ elif menu=="📂 My Reports":
                             file_name=os.path.basename(pdf)
 
                         )
-
 
 
 
@@ -406,14 +462,30 @@ elif menu=="📂 My Reports":
 
 
 
+
 # ------------------
 # ADMIN
 # ------------------
 
-elif menu=="👑 Admin":
+elif menu == "👑 Admin":
 
 
-    show_admin_dashboard()
+
+    if role == "admin":
+
+
+        show_admin_dashboard()
+
+
+
+    else:
+
+
+        st.error(
+            "Access denied"
+        )
+
+
 
 
 
@@ -426,6 +498,10 @@ if st.sidebar.button(
     "Logout"
 ):
 
-    st.session_state.user=None
+
+    st.session_state.user = None
+
+    st.session_state.role = None
+
 
     st.rerun()
