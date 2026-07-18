@@ -1,9 +1,31 @@
 import pandas as pd
 import os
+import re
 
 
 
-def create_excel(content, filename):
+def clean_filename(name):
+
+    name=name.lower()
+
+    name=re.sub(
+        r'[^a-zA-Z0-9 ]',
+        '',
+        name
+    )
+
+    name=name.replace(
+        " ",
+        "_"
+    )
+
+    return name[:80]
+
+
+
+
+
+def create_excel(data, topic="AI_Report"):
 
 
     os.makedirs(
@@ -12,21 +34,24 @@ def create_excel(content, filename):
     )
 
 
-    file_path=f"reports/{filename}.xlsx"
+    filename=clean_filename(topic)
+
+
+    path=f"reports/{filename}.xlsx"
 
 
 
     df=pd.DataFrame(
         {
-            "Report":[content]
+            "Report":[data]
         }
     )
 
 
     df.to_excel(
-        file_path,
+        path,
         index=False
     )
 
 
-    return file_path
+    return path

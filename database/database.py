@@ -1,13 +1,19 @@
 import sqlite3
+from datetime import datetime
 
 
-DATABASE_NAME = "ai_agent.db"
+DB_NAME = "ai_agent.db"
 
 
 
 def get_connection():
 
-    return sqlite3.connect(DATABASE_NAME)
+    conn = sqlite3.connect(
+        DB_NAME,
+        check_same_thread=False
+    )
+
+    return conn
 
 
 
@@ -20,7 +26,8 @@ def initialize_database():
     cursor = conn.cursor()
 
 
-    # Users table
+
+    # USERS TABLE
 
     cursor.execute("""
     CREATE TABLE IF NOT EXISTS users(
@@ -31,14 +38,60 @@ def initialize_database():
 
         password TEXT,
 
-        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        role TEXT DEFAULT 'user',
+
+        created_at TEXT
 
     )
     """)
 
 
 
-    # Conversations
+    # REPORTS TABLE
+
+    cursor.execute("""
+    CREATE TABLE IF NOT EXISTS reports(
+
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+
+        username TEXT,
+
+        topic TEXT,
+
+        report TEXT,
+
+        pdf_file TEXT,
+
+        excel_file TEXT,
+
+        created_at TEXT
+
+    )
+    """)
+
+
+
+    # USAGE TRACKING
+
+    cursor.execute("""
+    CREATE TABLE IF NOT EXISTS usage_tracking(
+
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+
+        username TEXT,
+
+        action TEXT,
+
+        topic TEXT,
+
+        created_at TEXT
+
+    )
+    """)
+
+
+
+    # CONVERSATION MEMORY
 
     cursor.execute("""
     CREATE TABLE IF NOT EXISTS conversations(
@@ -51,31 +104,7 @@ def initialize_database():
 
         message TEXT,
 
-        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-
-    )
-    """)
-
-
-
-    # Reports
-
-    cursor.execute("""
-    CREATE TABLE IF NOT EXISTS reports(
-
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-
-        user_id TEXT,
-
-        topic TEXT,
-
-        report TEXT,
-
-        pdf_file TEXT,
-
-        excel_file TEXT,
-
-        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        created_at TEXT
 
     )
     """)
@@ -91,7 +120,17 @@ def initialize_database():
 
 
 
-def create_user(username,password):
+
+# ---------------- USERS ----------------
+
+
+
+def create_user(
+        username,
+        password,
+        role="user"
+):
+
 
     conn=get_connection()
 
@@ -100,41 +139,56 @@ def create_user(username,password):
 
     try:
 
+
         cursor.execute(
         """
-        INSERT INTO users(username,password)
+        INSERT INTO users
+        (
+        username,
+        password,
+        role,
+        created_at
+        )
 
-        VALUES(?,?)
+        VALUES(?,?,?,?)
 
         """,
 
         (
-            username,
-            password
-        ))
+        username,
+        password,
+        role,
+        datetime.now().isoformat()
+        )
+
+        )
 
 
         conn.commit()
 
-        result=True
+
+        return True
 
 
-    except sqlite3.IntegrityError:
-
-        result=False
+    except Exception as e:
 
 
+        print(e)
 
-    conn.close()
+        return False
 
 
-    return result
+    finally:
+
+
+        conn.close()
 
 
 
 
 
 def get_user(username):
+
 
     conn=get_connection()
 
@@ -143,7 +197,10 @@ def get_user(username):
 
     cursor.execute(
     """
-    SELECT username,password
+    SELECT
+    username,
+    password,
+    role
 
     FROM users
 
@@ -151,9 +208,9 @@ def get_user(username):
 
     """,
 
-    (
-        username,
-    ))
+    (username,)
+
+    )
 
 
     user=cursor.fetchone()
@@ -169,13 +226,54 @@ def get_user(username):
 
 
 
+def get_all_users():
+
+
+    conn=get_connection()
+
+    cursor=conn.cursor()
+
+
+    cursor.execute(
+    """
+    SELECT
+    username,
+    role,
+    created_at
+
+    FROM users
+
+    """
+    )
+
+
+    data=cursor.fetchall()
+
+
+    conn.close()
+
+
+    return data
+
+
+
+
+
+
+
+# ---------------- REPORTS ----------------
+
+
+
+
 def save_report(
-        user_id,
+        username,
         topic,
         report,
         pdf_file,
         excel_file
 ):
+
 
     conn=get_connection()
 
@@ -187,24 +285,28 @@ def save_report(
     INSERT INTO reports
 
     (
-    user_id,
+    username,
     topic,
     report,
     pdf_file,
-    excel_file
+    excel_file,
+    created_at
     )
 
-    VALUES(?,?,?,?,?)
+    VALUES(?,?,?,?,?,?)
 
     """,
 
     (
-        user_id,
-        topic,
-        report,
-        pdf_file,
-        excel_file
-    ))
+    username,
+    topic,
+    report,
+    pdf_file,
+    excel_file,
+    datetime.now().isoformat()
+    )
+
+    )
 
 
     conn.commit()
@@ -215,8 +317,8 @@ def save_report(
 
 
 
+def get_user_reports(username):
 
-def get_reports(user_id):
 
     conn=get_connection()
 
@@ -232,20 +334,17 @@ def get_reports(user_id):
     excel_file,
     created_at
 
-
     FROM reports
 
-    WHERE user_id=?
-
+    WHERE username=?
 
     ORDER BY id DESC
 
     """,
 
-    (
-        user_id,
-    ))
+    (username,)
 
+    )
 
 
     reports=cursor.fetchall()
@@ -255,3 +354,317 @@ def get_reports(user_id):
 
 
     return reports
+
+
+
+
+
+
+# Compatibility function
+
+def get_reports(username=None):
+
+
+    if username:
+
+        return get_user_reports(username)
+
+
+
+    conn=get_connection()
+
+    cursor=conn.cursor()
+
+
+    cursor.execute(
+    """
+    SELECT *
+
+    FROM reports
+
+    ORDER BY id DESC
+
+    """
+    )
+
+
+    reports=cursor.fetchall()
+
+
+    conn.close()
+
+
+    return reports
+
+
+
+
+
+
+def get_all_reports():
+
+
+    conn=get_connection()
+
+    cursor=conn.cursor()
+
+
+    cursor.execute(
+    """
+    SELECT
+
+    username,
+    topic,
+    created_at
+
+    FROM reports
+
+    ORDER BY id DESC
+
+    """
+    )
+
+
+    reports=cursor.fetchall()
+
+
+    conn.close()
+
+
+    return reports
+
+
+
+
+
+
+
+# ---------------- USAGE ----------------
+
+
+
+
+def save_usage(
+        username,
+        action,
+        topic=""
+):
+
+
+    conn=get_connection()
+
+    cursor=conn.cursor()
+
+
+    cursor.execute(
+    """
+    INSERT INTO usage_tracking
+
+    (
+    username,
+    action,
+    topic,
+    created_at
+    )
+
+    VALUES(?,?,?,?)
+
+    """,
+
+    (
+    username,
+    action,
+    topic,
+    datetime.now().isoformat()
+    )
+
+    )
+
+
+    conn.commit()
+
+    conn.close()
+
+
+
+
+
+def get_usage_count():
+
+
+    conn=get_connection()
+
+    cursor=conn.cursor()
+
+
+    cursor.execute(
+    """
+    SELECT COUNT(*)
+
+    FROM usage_tracking
+
+    """
+    )
+
+
+    count=cursor.fetchone()[0]
+
+
+    conn.close()
+
+
+    return count
+
+
+
+
+
+
+def get_total_users():
+
+
+    conn=get_connection()
+
+    cursor=conn.cursor()
+
+
+    cursor.execute(
+    """
+    SELECT COUNT(*)
+
+    FROM users
+
+    """
+    )
+
+
+    count=cursor.fetchone()[0]
+
+
+    conn.close()
+
+
+    return count
+
+
+
+
+
+
+def get_total_reports():
+
+
+    conn=get_connection()
+
+    cursor=conn.cursor()
+
+
+    cursor.execute(
+    """
+    SELECT COUNT(*)
+
+    FROM reports
+
+    """
+    )
+
+
+    count=cursor.fetchone()[0]
+
+
+    conn.close()
+
+
+    return count
+
+
+
+
+
+
+
+# ---------------- MEMORY ----------------
+
+
+
+
+def save_message(
+        user_id,
+        role,
+        message
+):
+
+
+    conn=get_connection()
+
+    cursor=conn.cursor()
+
+
+    cursor.execute(
+    """
+    INSERT INTO conversations
+
+    (
+    user_id,
+    role,
+    message,
+    created_at
+    )
+
+    VALUES(?,?,?,?)
+
+    """,
+
+    (
+    user_id,
+    role,
+    message,
+    datetime.now().isoformat()
+    )
+
+    )
+
+
+    conn.commit()
+
+    conn.close()
+
+
+
+
+
+def get_history(user_id):
+
+
+    conn=get_connection()
+
+    cursor=conn.cursor()
+
+
+    cursor.execute(
+    """
+    SELECT
+
+    role,
+    message
+
+    FROM conversations
+
+    WHERE user_id=?
+
+    ORDER BY id ASC
+
+    """,
+
+    (user_id,)
+
+    )
+
+
+    history=cursor.fetchall()
+
+
+    conn.close()
+
+
+    return history

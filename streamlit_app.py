@@ -1,12 +1,42 @@
 import streamlit as st
+import os
 
 
-from database.database import initialize_database,get_reports
+from auth.auth import (
+    register,
+    login
+)
 
-from auth.auth import register,login
 
 from agent import run_agent
 
+
+from database.database import (
+    initialize_database,
+    get_reports
+)
+
+
+from admin import show_admin_dashboard
+
+
+from usage import track_usage
+
+
+
+# ------------------
+# APP CONFIG
+# ------------------
+
+st.set_page_config(
+
+    page_title="Mohammad AI Research Platform",
+
+    page_icon="🚀",
+
+    layout="wide"
+
+)
 
 
 
@@ -14,12 +44,32 @@ initialize_database()
 
 
 
-st.set_page_config(
-    page_title="AI Research SaaS"
+# ------------------
+# BRANDING
+# ------------------
+
+st.sidebar.title(
+    "🚀 Mohammad AI"
+)
+
+
+st.sidebar.write(
+    "Autonomous Business Research Agent"
+)
+
+
+st.sidebar.divider()
+
+
+st.sidebar.caption(
+    "Multi-Agent Intelligence System"
 )
 
 
 
+# ------------------
+# SESSION
+# ------------------
 
 if "user" not in st.session_state:
 
@@ -27,26 +77,32 @@ if "user" not in st.session_state:
 
 
 
-
-
-# ======================
+# ------------------
 # LOGIN PAGE
-# ======================
-
+# ------------------
 
 if st.session_state.user is None:
 
 
-    st.title("🚀 AI Research Agent")
+    st.title(
+        "🤖 AI Research Platform"
+    )
+
+
+    st.write(
+        "Generate AI-powered business research reports"
+    )
 
 
     option=st.selectbox(
+
         "Choose",
 
         [
             "Login",
             "Register"
         ]
+
     )
 
 
@@ -69,10 +125,16 @@ if st.session_state.user is None:
         if st.button("Create Account"):
 
 
-            if register(username,password):
+            result=register(
+                username,
+                password
+            )
+
+
+            if result:
 
                 st.success(
-                    "Account created. Login now."
+                    "Account created"
                 )
 
             else:
@@ -83,14 +145,20 @@ if st.session_state.user is None:
 
 
 
-
     else:
 
 
         if st.button("Login"):
 
 
-            if login(username,password):
+            result=login(
+                username,
+                password
+            )
+
+
+            if result:
+
 
                 st.session_state.user=username
 
@@ -104,117 +172,260 @@ if st.session_state.user is None:
             else:
 
                 st.error(
-                    "Invalid credentials"
+                    "Invalid login"
                 )
 
 
 
+    st.stop()
 
 
-# ======================
+
+
+
+# ------------------
+# LOGGED IN USER
+# ------------------
+
+
+username=st.session_state.user
+
+
+
+st.sidebar.success(
+    f"Welcome {username}"
+)
+
+
+
+menu=st.sidebar.radio(
+
+    "Menu",
+
+    [
+        "🏠 Dashboard",
+        "💬 AI Research Chat",
+        "📂 My Reports",
+        "👑 Admin"
+    ]
+
+)
+
+
+
+# ------------------
 # DASHBOARD
-# ======================
+# ------------------
+
+if menu=="🏠 Dashboard":
 
 
-else:
-
-
-    username=st.session_state.user
-
-
-
-    st.sidebar.write(
+    st.title(
         f"Welcome {username} 👋"
     )
 
 
-    menu=st.sidebar.selectbox(
+    st.info(
+        """
+        Your AI Research Assistant can:
 
-        "Menu",
-
-        [
-            "Generate Research",
-            "My Reports",
-            "Logout"
-        ]
-
+        • Perform web research
+        • Analyze information
+        • Generate professional reports
+        • Create PDF and Excel files
+        """
     )
 
 
 
-    if menu=="Logout":
-
-        st.session_state.user=None
-
-        st.rerun()
 
 
 
+# ------------------
+# CHAT INTERFACE
+# ------------------
+
+elif menu=="💬 AI Research Chat":
 
 
-    if menu=="Generate Research":
+    st.title(
+        "💬 AI Research Assistant"
+    )
 
 
-        st.title(
-            "🚀 Generate AI Research"
-        )
+    st.write(
+        "Ask anything about companies, markets or industries"
+    )
 
 
-        topic=st.text_input(
-            "Research Topic"
-        )
+    topic = st.chat_input(
+        "Example: Compare TCS vs Infosys"
+    )
 
 
 
-        if st.button("Generate"):
+    if topic:
 
 
-            result=run_agent(
-                topic,
-                username
+        with st.chat_message("user"):
+
+            st.write(topic)
+
+
+
+        with st.chat_message("assistant"):
+
+
+            with st.spinner(
+                "🤖 AI Agents working..."
+            ):
+
+
+                response = run_agent(
+                    topic,
+                    username
+                )
+
+
+                track_usage(
+                    username,
+                    "research_generated",
+                    topic
+                )
+
+
+            st.success(
+                "Report Generated Successfully ✅"
             )
 
 
-            st.write(result)
+            st.write(response)
 
 
 
 
 
+# ------------------
+# REPORTS
+# ------------------
 
-    if menu=="My Reports":
-
-
-        st.title(
-            "📂 My Reports"
-        )
+elif menu=="📂 My Reports":
 
 
-        reports=get_reports(username)
+    st.title(
+        "📂 My Reports"
+    )
 
 
 
-        for r in reports:
+    reports=get_reports(
+        username
+    )
+
+
+
+    if reports:
+
+
+        for report in reports:
+
+
+            topic=report[0]
+
+            pdf=report[1]
+
+            excel=report[2]
+
 
 
             st.subheader(
-                r[0]
+                topic
             )
 
 
-            st.write(
-                "Created:",
-                r[3]
-            )
+
+            col1,col2=st.columns(2)
 
 
-            st.write(
-                "PDF:",
-                r[1]
-            )
+
+            with col1:
 
 
-            st.write(
-                "Excel:",
-                r[2]
-            )
+                if os.path.exists(pdf):
+
+
+                    with open(pdf,"rb") as file:
+
+
+                        st.download_button(
+
+                            "⬇ Download PDF",
+
+                            file,
+
+                            file_name=os.path.basename(pdf)
+
+                        )
+
+
+
+
+            with col2:
+
+
+                if os.path.exists(excel):
+
+
+                    with open(excel,"rb") as file:
+
+
+                        st.download_button(
+
+                            "⬇ Download Excel",
+
+                            file,
+
+                            file_name=os.path.basename(excel)
+
+                        )
+
+
+            st.divider()
+
+
+
+    else:
+
+
+        st.info(
+            "No reports yet"
+        )
+
+
+
+
+
+
+# ------------------
+# ADMIN
+# ------------------
+
+elif menu=="👑 Admin":
+
+
+    show_admin_dashboard()
+
+
+
+
+# ------------------
+# LOGOUT
+# ------------------
+
+if st.sidebar.button(
+    "Logout"
+):
+
+    st.session_state.user=None
+
+    st.rerun()

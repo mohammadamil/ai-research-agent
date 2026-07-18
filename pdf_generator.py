@@ -1,43 +1,89 @@
-from reportlab.platypus import SimpleDocTemplate, Paragraph
+from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer
 from reportlab.lib.styles import getSampleStyleSheet
 import os
+import re
 
 
 
-def create_pdf(content, filename):
+def clean_filename(name):
 
+    name = name.lower()
+
+    name = re.sub(
+        r'[^a-zA-Z0-9 ]',
+        '',
+        name
+    )
+
+    name = name.replace(
+        " ",
+        "_"
+    )
+
+    return name[:80]
+
+
+
+
+
+def create_pdf(data, topic="AI_Report"):
+
+
+    folder="reports"
 
     os.makedirs(
-        "reports",
+        folder,
         exist_ok=True
     )
 
 
-    file_path = f"reports/{filename}.pdf"
+    filename = clean_filename(topic)
 
+
+    pdf_path = os.path.join(
+        folder,
+        f"{filename}.pdf"
+    )
 
 
     doc = SimpleDocTemplate(
-        file_path
+        pdf_path
     )
 
 
     styles=getSampleStyleSheet()
 
 
-    story=[]
+    content=[]
 
 
-    story.append(
-        Paragraph(
-            content,
-            styles["Normal"]
-        )
+    title=Paragraph(
+        f"AI Research Report: {topic}",
+        styles["Title"]
     )
 
 
-    doc.build(story)
+    content.append(title)
+
+    content.append(
+        Spacer(1,20)
+    )
 
 
+    for line in data.split("\n"):
 
-    return file_path
+
+        content.append(
+
+            Paragraph(
+                line,
+                styles["BodyText"]
+            )
+
+        )
+
+
+    doc.build(content)
+
+
+    return pdf_path
