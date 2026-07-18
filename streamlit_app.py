@@ -30,11 +30,11 @@ from usage import track_usage
 
 st.set_page_config(
 
-    page_title="Mohammad AI Research Platform",
+    page_title="AI Research Platform",
 
     page_icon="🚀",
 
-    layout="wide"
+    layout="centered"
 
 )
 
@@ -68,9 +68,21 @@ conn.close()
 # BRANDING
 # ------------------
 
-st.sidebar.title(
-    "🚀 Mohammad AI"
-)
+# ------------------
+# BRANDING
+# ------------------
+
+if st.session_state.get("user"):
+
+    st.sidebar.markdown(
+        f"## 🤖 {st.session_state.user} Research AI"
+    )
+
+else:
+
+    st.sidebar.markdown(
+        "## 🤖 AI Research Platform"
+    )
 
 
 st.sidebar.write(
@@ -272,7 +284,7 @@ if role == "admin":
 
 menu = st.sidebar.radio(
 
-    "Menu",
+    "☰ Menu",
 
     menu_items
 
@@ -326,7 +338,7 @@ elif menu == "💬 AI Research Chat":
 
 
     topic = st.chat_input(
-        "Example: Compare TCS vs Infosys"
+        "Ask your research question..."
     )
 
 
@@ -421,7 +433,8 @@ elif menu == "📂 My Reports":
 
 
 
-            col1,col2 = st.columns(2)
+            col1 = st.container()
+            col2 = st.container()
 
 
 
