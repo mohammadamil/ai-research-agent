@@ -42,7 +42,27 @@ st.set_page_config(
 
 initialize_database()
 
+from database.database import get_connection
 
+
+conn = get_connection()
+
+cursor = conn.cursor()
+
+
+# Make your account admin
+cursor.execute(
+    """
+    UPDATE users
+    SET role='admin'
+    WHERE username='Mohammad Amil'
+    """
+)
+
+
+conn.commit()
+
+conn.close()
 
 # ------------------
 # BRANDING
