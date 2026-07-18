@@ -158,4 +158,8 @@ def run_agent(task,user_id):
 
 
 
-    return data
+    return {
+    "report": data,
+    "pdf_file": pdf_file,
+    "excel_file": excel_file
+    }

@@ -24,6 +24,7 @@ from usage import track_usage
 
 
 
+
 # ------------------
 # APP CONFIG
 # ------------------
@@ -34,68 +35,13 @@ st.set_page_config(
 
     page_icon="🚀",
 
-    layout="centered"
+    layout="wide"
 
 )
 
 
 
 initialize_database()
-
-from database.database import get_connection
-
-
-conn = get_connection()
-
-cursor = conn.cursor()
-
-
-# Make your account admin
-cursor.execute(
-    """
-    UPDATE users
-    SET role='admin'
-    WHERE username='Mohammad Amil'
-    """
-)
-
-
-conn.commit()
-
-conn.close()
-
-# ------------------
-# BRANDING
-# ------------------
-
-# ------------------
-# BRANDING
-# ------------------
-
-if st.session_state.get("user"):
-
-    st.sidebar.markdown(
-        f"## 🤖 {st.session_state.user} Research AI"
-    )
-
-else:
-
-    st.sidebar.markdown(
-        "## 🤖 AI Research Platform"
-    )
-
-
-st.sidebar.write(
-    "Autonomous Business Research Agent"
-)
-
-
-st.sidebar.divider()
-
-
-st.sidebar.caption(
-    "Multi-Agent Intelligence System"
-)
 
 
 
@@ -108,7 +54,6 @@ if "user" not in st.session_state:
     st.session_state.user = None
 
 
-
 if "role" not in st.session_state:
 
     st.session_state.role = None
@@ -118,7 +63,7 @@ if "role" not in st.session_state:
 
 
 # ------------------
-# LOGIN PAGE
+# LOGIN / REGISTER
 # ------------------
 
 if st.session_state.user is None:
@@ -134,7 +79,6 @@ if st.session_state.user is None:
     )
 
 
-
     option = st.selectbox(
 
         "Choose",
@@ -145,7 +89,6 @@ if st.session_state.user is None:
         ]
 
     )
-
 
 
     username = st.text_input(
@@ -175,7 +118,7 @@ if st.session_state.user is None:
             if result:
 
                 st.success(
-                    "Account created"
+                    "Account created successfully"
                 )
 
             else:
@@ -201,18 +144,9 @@ if st.session_state.user is None:
             if result:
 
 
-                # result contains:
-                # username,password,role
-
                 st.session_state.user = result[0]
 
                 st.session_state.role = result[2]
-
-
-                st.success(
-                    "Login successful"
-                )
-
 
                 st.rerun()
 
@@ -221,7 +155,7 @@ if st.session_state.user is None:
             else:
 
                 st.error(
-                    "Invalid login"
+                    "Invalid username or password"
                 )
 
 
@@ -232,10 +166,10 @@ if st.session_state.user is None:
 
 
 
-# ------------------
-# LOGGED IN USER
-# ------------------
 
+# ------------------
+# USER INFO
+# ------------------
 
 username = st.session_state.user
 
@@ -243,14 +177,69 @@ role = st.session_state.role
 
 
 
-st.sidebar.success(
-    f"Welcome {username}"
+
+
+# ------------------
+# TOP BAR
+# ------------------
+
+col1,col2 = st.columns(
+    [8,1]
+)
+
+
+with col1:
+
+    st.title(
+        f"Welcome {username} 👋"
+    )
+
+
+with col2:
+
+
+    if st.button(
+        "Logout"
+    ):
+
+        st.session_state.user = None
+
+        st.session_state.role = None
+
+        st.rerun()
+
+
+
+
+
+
+# ------------------
+# SIDEBAR
+# ------------------
+
+st.sidebar.markdown(
+
+    f"## 🤖 {username} Research AI"
+
+)
+
+
+st.sidebar.write(
+
+    "Autonomous Business Research Agent"
+
 )
 
 
 st.sidebar.caption(
-    f"Role: {role}"
+
+    f"Role : {role}"
+
 )
+
+
+st.sidebar.divider()
+
 
 
 
@@ -258,7 +247,6 @@ st.sidebar.caption(
 # ------------------
 # MENU
 # ------------------
-
 
 menu_items = [
 
@@ -271,9 +259,6 @@ menu_items = [
 ]
 
 
-
-# Only admin sees this
-
 if role == "admin":
 
     menu_items.append(
@@ -282,7 +267,7 @@ if role == "admin":
 
 
 
-menu = st.sidebar.radio(
+menu = st.sidebar.selectbox(
 
     "☰ Menu",
 
@@ -293,27 +278,28 @@ menu = st.sidebar.radio(
 
 
 
-# ------------------
+
+
+# ==================================================
 # DASHBOARD
-# ------------------
+# ==================================================
 
-if menu=="🏠 Dashboard":
-
-
-    st.title(
-        f"Welcome {username} 👋"
-    )
+if menu == "🏠 Dashboard":
 
 
-    st.subheader(
-        "🔎 Start AI Research"
+    st.header(
+        "🔎 AI Research Dashboard"
     )
 
 
     search_topic = st.text_input(
+
         "What do you want to research?",
+
         placeholder="Example: Top AI companies in India 2026"
+
     )
+
 
 
     if st.button(
@@ -325,29 +311,132 @@ if menu=="🏠 Dashboard":
 
 
             with st.spinner(
+
                 "🤖 AI Agents researching..."
+
             ):
 
 
-                response = run_agent(
+                result = run_agent(
+
                     search_topic,
+
                     username
+
                 )
 
 
                 track_usage(
+
                     username,
+
                     "dashboard_search",
+
                     search_topic
+
                 )
 
 
+
             st.success(
+
                 "Report Generated Successfully ✅"
+
             )
 
 
-            st.write(response)
+
+            if isinstance(result,dict):
+
+
+                st.write(
+
+                    result.get(
+                        "report"
+                    )
+
+                )
+
+
+                st.divider()
+
+
+                st.subheader(
+                    "📥 Download Report"
+                )
+
+
+
+                pdf = result.get(
+                    "pdf_file"
+                )
+
+
+                excel = result.get(
+                    "excel_file"
+                )
+
+
+
+                c1,c2 = st.columns(2)
+
+
+
+                with c1:
+
+
+                    if pdf and os.path.exists(pdf):
+
+
+                        with open(pdf,"rb") as file:
+
+
+                            st.download_button(
+
+                                "📄 Download PDF",
+
+                                file,
+
+                                file_name=os.path.basename(pdf),
+
+                                mime="application/pdf",
+
+                                key="dashboard_pdf"
+
+                            )
+
+
+
+                with c2:
+
+
+                    if excel and os.path.exists(excel):
+
+
+                        with open(excel,"rb") as file:
+
+
+                            st.download_button(
+
+                                "📊 Download Excel",
+
+                                file,
+
+                                file_name=os.path.basename(excel),
+
+                                mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+
+                                key="dashboard_excel"
+
+                            )
+
+
+
+            else:
+
+
+                st.write(result)
+
 
 
         else:
@@ -359,43 +448,24 @@ if menu=="🏠 Dashboard":
 
 
 
-    st.divider()
 
 
-
-    st.info(
-        """
-        Your AI Research Assistant can:
-
-        • Perform web research
-        • Analyze information
-        • Generate professional reports
-        • Create PDF and Excel files
-        """
-    )
-
-
-
-
-# ------------------
-# CHAT INTERFACE
-# ------------------
+# ==================================================
+# AI CHAT
+# ==================================================
 
 elif menu == "💬 AI Research Chat":
 
 
-    st.title(
+    st.header(
         "💬 AI Research Assistant"
     )
 
 
-    st.write(
-        "Ask anything about companies, markets or industries"
-    )
-
-
     topic = st.chat_input(
+
         "Ask your research question..."
+
     )
 
 
@@ -413,11 +483,13 @@ elif menu == "💬 AI Research Chat":
 
 
             with st.spinner(
+
                 "🤖 AI Agents working..."
+
             ):
 
 
-                response = run_agent(
+                result = run_agent(
 
                     topic,
 
@@ -430,7 +502,7 @@ elif menu == "💬 AI Research Chat":
 
                     username,
 
-                    "research_generated",
+                    "chat",
 
                     topic
 
@@ -439,26 +511,38 @@ elif menu == "💬 AI Research Chat":
 
 
             st.success(
+
                 "Report Generated Successfully ✅"
+
             )
 
 
-            st.write(response)
+
+            if isinstance(result,dict):
+
+                st.write(
+
+                    result["report"]
+
+                )
+
+            else:
+
+                st.write(result)
 
 
 
 
 
 
-
-# ------------------
-# REPORTS
-# ------------------
+# ==================================================
+# MY REPORTS
+# ==================================================
 
 elif menu == "📂 My Reports":
 
 
-    st.title(
+    st.header(
         "📂 My Reports"
     )
 
@@ -473,7 +557,7 @@ elif menu == "📂 My Reports":
     if reports:
 
 
-        for report in reports:
+        for index,report in enumerate(reports):
 
 
             topic = report[0]
@@ -490,50 +574,47 @@ elif menu == "📂 My Reports":
 
 
 
-            col1 = st.container()
-            col2 = st.container()
+            if pdf and os.path.exists(pdf):
+
+
+                with open(pdf,"rb") as file:
+
+
+                    st.download_button(
+
+                        "📄 Download PDF",
+
+                        file,
+
+                        file_name=os.path.basename(pdf),
+
+                        mime="application/pdf",
+
+                        key=f"report_pdf_{index}"
+
+                    )
 
 
 
-            with col1:
+            if excel and os.path.exists(excel):
 
 
-                if os.path.exists(pdf):
+                with open(excel,"rb") as file:
 
 
-                    with open(pdf,"rb") as file:
+                    st.download_button(
 
+                        "📊 Download Excel",
 
-                        st.download_button(
+                        file,
 
-                            "⬇ Download PDF",
+                        file_name=os.path.basename(excel),
 
-                            file,
+                        mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
 
-                            file_name=os.path.basename(pdf)
+                        key=f"report_excel_{index}"
 
-                        )
-
-
-
-            with col2:
-
-
-                if os.path.exists(excel):
-
-
-                    with open(excel,"rb") as file:
-
-
-                        st.download_button(
-
-                            "⬇ Download Excel",
-
-                            file,
-
-                            file_name=os.path.basename(excel)
-
-                        )
+                    )
 
 
             st.divider()
@@ -552,46 +633,20 @@ elif menu == "📂 My Reports":
 
 
 
-
-# ------------------
+# ==================================================
 # ADMIN
-# ------------------
+# ==================================================
 
 elif menu == "👑 Admin":
 
 
-
     if role == "admin":
-
 
         show_admin_dashboard()
 
 
-
     else:
-
 
         st.error(
             "Access denied"
         )
-
-
-
-
-
-
-# ------------------
-# LOGOUT
-# ------------------
-
-if st.sidebar.button(
-    "Logout"
-):
-
-
-    st.session_state.user = None
-
-    st.session_state.role = None
-
-
-    st.rerun()
